@@ -1,3 +1,13 @@
+#ifndef INSTRUCTION_H
+#define INSTRUCTION_H
+
+struct System {
+    int currTime;
+    int memory;
+    int devices;
+    int quantum;
+};
+
 enum InstructionType {
     JA,
     DReq,
@@ -32,3 +42,5 @@ struct Instruction {
         struct DeviceRelease deviceRelease;
     } data;
 };
+
+#endif
