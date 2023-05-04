@@ -2,11 +2,10 @@ enum InstructionType {
     JA,
     DReq,
     DRel,
-    Dis
+    Display,
 };
 
 struct JobArrival {
-    int time;
     int jobNumber;
     int memoryRequirement;
     int devicesRequirement;
@@ -15,27 +14,21 @@ struct JobArrival {
 };
 
 struct DeviceRequest {
-    int time;
     int jobNumber;
     int deviceNumber;
 };
 
 struct DeviceRelease {
-    int time;
     int jobNumber;
     int deviceNumber;
 };
 
-struct Display {
-    int time;
-};
-
 struct Instruction {
     enum InstructionType type;
+    int time;
     union {
         struct JobArrival jobArrival;
         struct DeviceRequest deviceRequest;
         struct DeviceRelease deviceRelease;
-        struct Display display;
     } data;
 };

@@ -23,7 +23,7 @@ void print(System system, const vector<Instruction>& instructions) {
     for(int i = 0; i < instructions.size(); i++) {
         switch (instructions[i].type) {
             case JA:
-                cout << "Job arrival: Time = " << instructions[i].data.jobArrival.time;
+                cout << "Job arrival: Time = " << instructions[i].time;
                 cout << ", jobNumber = " << instructions[i].data.jobArrival.jobNumber;
                 cout << ", memoryRequirement = " << instructions[i].data.jobArrival.memoryRequirement;
                 cout << ", burstTime = " << instructions[i].data.jobArrival.burstTime;
@@ -31,19 +31,19 @@ void print(System system, const vector<Instruction>& instructions) {
                 cout << endl;
                 break;
             case DReq:
-                cout << "Device request: Time = " << instructions[i].data.deviceRequest.time;
+                cout << "Device request: Time = " << instructions[i].time;
                 cout << ", jobNumber = " << instructions[i].data.deviceRequest.jobNumber;
                 cout << ", deviceNumber = " << instructions[i].data.deviceRequest.deviceNumber;
                 cout << endl;
                 break;
             case DRel:
-                cout << "Device release: Time = " << instructions[i].data.deviceRelease.time;
+                cout << "Device release: Time = " << instructions[i].time;
                 cout << ", jobNumber = " << instructions[i].data.deviceRelease.jobNumber;
                 cout << ", deviceNumber = " << instructions[i].data.deviceRelease.deviceNumber;
                 cout << endl;
                 break;
-            case Dis:
-                cout << "Display: Time = " << instructions[i].data.display.time << endl;
+            case Display:
+                cout << "Display: Time = " << instructions[i].time << endl;
                 break;
             default:
                 cout << "Unknown instruction!" << endl;
@@ -62,7 +62,7 @@ void proccessVec(vector<string>& input, System* system, vector<Instruction>& ins
             break;
         case 'A':
             curr.type = JA;
-            curr.data.jobArrival.time = stoi(input[1]);
+            curr.time = stoi(input[1]);
             curr.data.jobArrival.jobNumber = stoi(input[2].substr(2));
             curr.data.jobArrival.memoryRequirement = stoi(input[3].substr(2));
             curr.data.jobArrival.devicesRequirement = stoi(input[4].substr(2));
@@ -72,21 +72,21 @@ void proccessVec(vector<string>& input, System* system, vector<Instruction>& ins
             break;
         case 'Q':
             curr.type = DReq;
-            curr.data.deviceRequest.time = stoi(input[1]);
+            curr.time = stoi(input[1]);
             curr.data.deviceRequest.jobNumber = stoi(input[2].substr(2));
             curr.data.deviceRequest.deviceNumber = stoi(input[3].substr(2));
             instructions.push_back(curr);  
             break;     
         case 'L':
             curr.type = DRel;
-            curr.data.deviceRequest.time = stoi(input[1]);
+            curr.time = stoi(input[1]);
             curr.data.deviceRequest.jobNumber = stoi(input[2].substr(2));
             curr.data.deviceRequest.deviceNumber = stoi(input[3].substr(2));
             instructions.push_back(curr);  
             break;   
         case 'D':
-            curr.type = Dis;
-            curr.data.display.time = stoi(input[1]);
+            curr.type = Display;
+            curr.time = stoi(input[1]);
             instructions.push_back(curr);  
             break;   
         default:
