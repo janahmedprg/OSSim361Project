@@ -13,10 +13,11 @@ BIN=../bin
 all: main
 
 run: main
-	./$(BIN)/main.o
+	./$(BIN)/main.exe
 
 main: $(SRCS)
-	$(CC) $(CFLAGS) -o $(BIN)/main.o $(SRCS)
+	$(CC) $(CFLAGS) -o $(BIN)/main.exe $(SRCS)
 
 clean:
 	rm bin/*.o
+	rm bin/*.exe
