@@ -6,7 +6,7 @@ CC = g++
 #  -Wall  - this flag is used to turn on most compiler warnings
 #  -Iheaders - this flag links the header files stored in the headers folder into compilation
 CFLAGS  = -g -Wall -I../headers
-SRCS=main.cpp input.cpp
+SRCS=main.cpp utils.cpp input.cpp
 BIN=../bin
 # The build target 
 

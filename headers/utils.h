@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <instruction.h>
+#include <queue>
 
 using namespace std;
 
@@ -38,7 +39,7 @@ struct cmpQ2{
     };
 
 
-void handleJobArrival(struct Job job, priority_queue<struct Job, vector<struct Job>, cmpQ1> holdQueue1, priority_queue<struct Job, vector<struct Job>, cmpQ2> holdQueue2, queue<Process> readyQueue,System* system);
+void handleJobArrival(struct Job job, priority_queue<struct Job, vector<struct Job>, cmpQ1>& holdQueue1, priority_queue<struct Job, vector<struct Job>, cmpQ2>& holdQueue2, queue<Process>& readyQueue,System* system);
 
 void handleDeviceRequest();
 

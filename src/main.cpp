@@ -20,30 +20,39 @@ int main(int argc, char *argv[])
     int totalMemory = system.memory;
     int totalDevices = system.devices;
 
-    // Populate ready queue with dummy variables for testing
     queue<Process> readyQueue;
     priority_queue<struct Job, vector<struct Job>, cmpQ1> holdQueue1;
     priority_queue<struct Job, vector<struct Job>, cmpQ2> holdQueue2;
-    for (int i = 0; i < 3; i++)
-    {
-        Process tmp;
-        tmp.id = i;
-        tmp.burstTimeRemaining = i * 5;
-        tmp.neededMemory = 3;
-        tmp.devicesHeld = 0;
-        readyQueue.push(tmp);
-    }
+
     Process *CPU = nullptr;
 
     // Main driver.
     int timeOfNextInput;
     int timeOfNextInternalEvent = system.quantum;
-
     long unsigned int instructionIdx = 0;
 
-    CPU = &readyQueue.front();
-    readyQueue.pop();
-    while (readyQueue.size())
+    while(true){
+        if(instructionIdx >= instructions.size()){
+            cout<<"No proccess ran on our system.\n";
+            return 0;
+        }
+        if(instructions[instructionIdx].type == JA){
+            Process tmp;
+            tmp.id = instructions[instructionIdx].data.jobArrival.jobNumber;
+            tmp.neededMemory = instructions[instructionIdx].data.jobArrival.memoryRequirement;
+            tmp.devicesHeld = instructions[instructionIdx].data.jobArrival.devicesRequirement;
+            tmp.burstTimeRemaining = instructions[instructionIdx].data.jobArrival.burstTime;
+            if(totalDevices>=tmp.devicesHeld && totalMemory>= tmp.neededMemory){
+                CPU = &tmp;
+                system.memory -= tmp.neededMemory;
+                system.devices -= tmp.devicesHeld;
+                break;
+            }
+        }
+        instructionIdx +=1;
+    }
+
+    while (readyQueue.size() || CPU != nullptr)
     {
         // The time of next input should be infinite if there are none left,
         // otherwise it is the time of next instruction - current time.
@@ -115,6 +124,9 @@ int main(int argc, char *argv[])
                 readyQueue.pop();
                 if(readyQueue.size()>0){
                     CPU = &readyQueue.front();
+                }
+                else{
+                    CPU = nullptr;
                 }
             }
             else
