@@ -39,7 +39,6 @@ int main(int argc, char *argv[])
     int timeOfNextInput;
     int timeOfNextInternalEvent = system.quantum;
 
-    int roundRobinIdx = 0;
     long unsigned int instructionIdx = 0;
 
     CPU = &readyQueue.front();
@@ -113,9 +112,18 @@ int main(int argc, char *argv[])
             // Remove the process from the queue.
             if (CPU->burstTimeRemaining == 0)
             {
-                        }
+                readyQueue.pop();
+                if(readyQueue.size()>0){
+                    CPU = &readyQueue.front();
+                }
+            }
+            else
+            {
+                readyQueue.push(*CPU);
+                CPU = &readyQueue.front();
+                readyQueue.pop();
+            }
             handleProcessTermination();
-            roundRobinIdx = (roundRobinIdx + 1) % readyQueue.size();
         }
     }
 
