@@ -7,60 +7,23 @@
 #include <queue>
 #include <instruction.h>
 #include <input.h>
+#include <utils.h>
 
 using namespace std;
 
-struct Process
-{
-    int id;
-    int burstTimeRemaining;
-    int neededMemory;
-    int devicesHeld;
-};
-
-void handleJobArrival()
-{
-    // TODO
-    cout << "Handling job arrival" << endl;
-    return;
-}
-
-void handleDeviceRequest()
-{
-    // TODO
-    cout << "handling device request" << endl;
-    return;
-}
-
-void handleDeviceRelease()
-{
-    // TODO
-    cout << "handling device release" << endl;
-    return;
-}
-
-void handleDisplay()
-{
-    // TODO
-    cout << "handling display" << endl;
-    return;
-}
-
-void handleProcessTermination()
-{
-    // TODO
-    cout << "terminating process" << endl;
-    return;
-}
 
 int main(int argc, char *argv[])
 {
     vector<Instruction> instructions;
     System system;
     readInput("../input/i0.txt", instructions, &system);
+    int totalMemory = system.memory;
+    int totalDevices = system.devices;
 
     // Populate ready queue with dummy variables for testing
     queue<Process> readyQueue;
+    priority_queue<struct Job, vector<struct Job>, cmpQ1> holdQueue1;
+    priority_queue<struct Job, vector<struct Job>, cmpQ2> holdQueue2;
     for (int i = 0; i < 3; i++)
     {
         Process tmp;
@@ -92,7 +55,7 @@ int main(int argc, char *argv[])
         else
         {
             timeOfNextInput = INT16_MAX;
-        };
+        }
 
         // The time of next internal event will normally be the time quantum
         // unless the quantum will finish the burst time of the process, then it is the remaining time.
@@ -114,7 +77,16 @@ int main(int argc, char *argv[])
             switch (instructions[instructionIdx].type)
             {
             case JA:
-                handleJobArrival();
+                Job tmp;
+                tmp.jobNumber = instructions[instructionIdx].data.jobArrival.jobNumber;
+                tmp.arrival = instructions[instructionIdx].time;
+                tmp.memoryRequirement = instructions[instructionIdx].data.jobArrival.memoryRequirement;
+                tmp.devicesRequirement = instructions[instructionIdx].data.jobArrival.devicesRequirement;
+                tmp.burstTime = instructions[instructionIdx].data.jobArrival.burstTime;
+                tmp.priority = instructions[instructionIdx].data.jobArrival.priority;
+                if(totalDevices>=tmp.devicesRequirement && totalMemory>= tmp.memoryRequirement){
+                    handleJobArrival(tmp, holdQueue1, holdQueue2, readyQueue, &system);
+                }
                 break;
             case DRel:
                 handleDeviceRelease();
