@@ -7,11 +7,9 @@ void handleJobArrival(struct Job job, priority_queue<struct Job, vector<struct J
     if(system->memory<job.memoryRequirement){
         if(job.priority ==  1){
             holdQueue1.push(job);
-            cout<<"job"<<job.jobNumber<<"placed in q 1\n";
         }
         else{
             holdQueue2.push(job);
-            cout<<"job"<< job.jobNumber<<"placed in q 2\n";
         }
     }
     else{
@@ -19,7 +17,7 @@ void handleJobArrival(struct Job job, priority_queue<struct Job, vector<struct J
         tmp.id = job.jobNumber;
         tmp.burstTimeRemaining = job.burstTime;
         tmp.neededMemory = job.memoryRequirement;
-        tmp.devicesHeld = job.devicesRequirement;
+        tmp.devicesHeld = 0;
         system->memory -= tmp.neededMemory;
         readyQueue.push(tmp);
     }

@@ -31,27 +31,10 @@ int main(int argc, char *argv[])
     int timeOfNextInternalEvent = system.quantum;
     long unsigned int instructionIdx = 0;
 
-    while(true){
-        if(instructionIdx >= instructions.size()){
-            cout<<"No proccess ran on our system.\n";
-            return 0;
-        }
-        if(instructions[instructionIdx].type == JA){
-            Process tmp;
-            tmp.id = instructions[instructionIdx].data.jobArrival.jobNumber;
-            tmp.neededMemory = instructions[instructionIdx].data.jobArrival.memoryRequirement;
-            tmp.devicesHeld = 0;
-            tmp.burstTimeRemaining = instructions[instructionIdx].data.jobArrival.burstTime;
-            if(totalDevices>=tmp.devicesHeld && totalMemory>= tmp.neededMemory){
-                CPU = &tmp;
-                system.memory -= tmp.neededMemory;
-                break;
-            }
-        }
-        instructionIdx +=1;
-    }
+    bool running = true;
 
-    while (readyQueue.size() || CPU != nullptr)
+
+    while (running)
     {
         // The time of next input should be infinite if there are none left,
         // otherwise it is the time of next instruction - current time.
@@ -66,7 +49,7 @@ int main(int argc, char *argv[])
 
         // The time of next internal event will normally be the time quantum
         // unless the quantum will finish the burst time of the process, then it is the remaining time.
-        if (CPU->burstTimeRemaining < system.quantum)
+        if (CPU != nullptr && CPU->burstTimeRemaining < system.quantum)
         {
             timeOfNextInternalEvent = CPU->burstTimeRemaining;
         }
@@ -80,7 +63,9 @@ int main(int argc, char *argv[])
             // We will handle the instruction first
             // Jump the current time to the next input.
             system.currTime += timeOfNextInput;
-            CPU->burstTimeRemaining -= timeOfNextInput;
+            if(CPU != nullptr){
+                CPU->burstTimeRemaining -= timeOfNextInput;
+            }
             switch (instructions[instructionIdx].type)
             {
             case JA:
@@ -116,9 +101,11 @@ int main(int argc, char *argv[])
             // Jump forward to the end of the quantum.
             system.currTime += timeOfNextInternalEvent;
 
-            CPU->burstTimeRemaining -= timeOfNextInternalEvent;
+            if (CPU != nullptr){
+                CPU->burstTimeRemaining -= timeOfNextInternalEvent;
+            }
             // Remove the process from the queue.
-            if (CPU->burstTimeRemaining == 0)
+            if (CPU != nullptr && CPU->burstTimeRemaining == 0)
             {
                 readyQueue.pop();
                 if(readyQueue.size()>0){
@@ -127,14 +114,18 @@ int main(int argc, char *argv[])
                 else{
                     CPU = nullptr;
                 }
+                handleProcessTermination();
             }
             else
             {
-                readyQueue.push(*CPU);
-                CPU = &readyQueue.front();
-                readyQueue.pop();
+                if(CPU != nullptr){
+                    readyQueue.push(*CPU);
+                }
+                if(readyQueue.size() != 0){
+                    CPU = &readyQueue.front();
+                    readyQueue.pop();
+                }
             }
-            handleProcessTermination();
         }
     }
 
