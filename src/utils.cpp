@@ -27,6 +27,12 @@ void handleJobArrival(struct Job job, priority_queue<struct Job, vector<struct J
 void handleDeviceRequest()
 {
     // TODO
+    // Run banker's algo -> it will return a boolean value
+    // If true:
+    // update the number of devices that the job currently holds
+    // reduce the number of devices that the system has to give
+    // If false: move job to end of the waiting queue
+
     cout << "handling device request" << endl;
     return;
 }
@@ -34,6 +40,15 @@ void handleDeviceRequest()
 void handleDeviceRelease()
 {
     // TODO
+    // Update the number of devices the job currently holds
+    // increase the number of devices the system has to give
+    // Loop through the waiting queue
+    // And run bankers algorithm on for each job that banker's algo returns true for
+    // move back to the ready queue. 
+    // If a job can be moved from the waiting to the ready queue, then you need to have similar logic to the device request.
+    // Still need to increase the number of devices that the job holds
+    // Reduce the number of devices system has to give. 
+    
     cout << "handling device release" << endl;
     return;
 }
