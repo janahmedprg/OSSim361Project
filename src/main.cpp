@@ -40,12 +40,11 @@ int main(int argc, char *argv[])
             Process tmp;
             tmp.id = instructions[instructionIdx].data.jobArrival.jobNumber;
             tmp.neededMemory = instructions[instructionIdx].data.jobArrival.memoryRequirement;
-            tmp.devicesHeld = instructions[instructionIdx].data.jobArrival.devicesRequirement;
+            tmp.devicesHeld = 0;
             tmp.burstTimeRemaining = instructions[instructionIdx].data.jobArrival.burstTime;
             if(totalDevices>=tmp.devicesHeld && totalMemory>= tmp.neededMemory){
                 CPU = &tmp;
                 system.memory -= tmp.neededMemory;
-                system.devices -= tmp.devicesHeld;
                 break;
             }
         }

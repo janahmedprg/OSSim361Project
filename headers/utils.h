@@ -28,7 +28,12 @@ struct Job
 
 struct cmpQ1{
         bool operator()(struct Job a, struct Job b){
-            return (a.burstTime < b.burstTime);
+            if(a.burstTime != b.burstTime){
+                return (a.burstTime < b.burstTime);
+            }
+            else{
+                return (a.arrival < b.arrival);
+            }
         }
     };
 
