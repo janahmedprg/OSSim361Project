@@ -140,9 +140,27 @@ void handleDisplay()
     return;
 }
 
-void handleProcessTermination()
+void handleProcessTermination(queue<Job>& waitQueue,priority_queue<struct Job, vector<struct Job>, cmpQ1>& holdQueue1,
+                              priority_queue<struct Job, vector<struct Job>, cmpQ2>& holdQueue2,
+                              queue<Job>& readyQueue, Job* CPU, System* system, vector<Job>& doneArr)
 {
-    // TODO
-    cout << "terminating process" << endl;
+    DeviceRelease dRelease = {CPU->jobNumber, CPU->devicesHeld};
+    handleDeviceRelease(dRelease, waitQueue, readyQueue, CPU, system);
+    system->memory += CPU->memoryRequirement;
+    if(holdQueue1.size()>0){
+        if(system->memory >= holdQueue1.top().memoryRequirement){
+            readyQueue.push(holdQueue1.top());
+            system->memory -= holdQueue1.top().memoryRequirement;
+            holdQueue1.pop();
+        }
+    }
+    else if (holdQueue2.size()>0){
+        if (system->memory >= holdQueue2.top().memoryRequirement){
+            readyQueue.push(holdQueue2.top());
+            system->memory -= holdQueue2.top().memoryRequirement;
+            holdQueue2.pop();
+        }
+    }
+    doneArr.push_back(*CPU);
     return;
 }

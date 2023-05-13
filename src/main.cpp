@@ -22,6 +22,7 @@ int main(int argc, char *argv[])
 
     queue<Job> readyQueue;
     queue<Job> waitQueue;
+    vector<Job> doneArr;
     priority_queue<struct Job, vector<struct Job>, cmpQ1> holdQueue1;
     priority_queue<struct Job, vector<struct Job>, cmpQ2> holdQueue2;
 
@@ -117,14 +118,14 @@ int main(int argc, char *argv[])
             // Remove the process from the queue.
             if (CPU != nullptr && CPU->burstTime == 0)
             {
-                readyQueue.pop();
+                handleProcessTermination(waitQueue, holdQueue1, holdQueue2, readyQueue, CPU, &system, doneArr);
                 if(readyQueue.size()>0){
                     CPU = &readyQueue.front();
+                    readyQueue.pop();
                 }
                 else{
                     CPU = nullptr;
                 }
-                handleProcessTermination();
             }
             else
             {
