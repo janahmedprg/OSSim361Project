@@ -8,20 +8,13 @@
 
 using namespace std;
 
-struct Process
-{
-    int id;
-    int burstTimeRemaining;
-    int neededMemory;
-    int devicesHeld;
-};
-
 struct Job
 {
     int jobNumber;
     int arrival;
     int memoryRequirement;
     int devicesRequirement;
+    int devicesHeld;
     int burstTime;
     int priority;
 };
@@ -44,11 +37,12 @@ struct cmpQ2{
     };
 
 
-void handleJobArrival(struct Job job, priority_queue<struct Job, vector<struct Job>, cmpQ1>& holdQueue1, priority_queue<struct Job, vector<struct Job>, cmpQ2>& holdQueue2, queue<Process>& readyQueue,System* system);
+void handleJobArrival(struct Job job, priority_queue<struct Job, vector<struct Job>, cmpQ1>& holdQueue1, priority_queue<struct Job,
+                      vector<struct Job>, cmpQ2>& holdQueue2, queue<Job>& readyQueue,System* system);
 
-void handleDeviceRequest();
+bool handleDeviceRequest(DeviceRequest req, queue<Job>& waitQueue, queue<Job>& readyQueue, Job* CPU, System* system);
 
-void handleDeviceRelease();
+void handleDeviceRelease(DeviceRelease req, queue<Job>& waitQueue, queue<Job>& readyQueue, Job* CPU, System* system);
 void handleDisplay();
 
 void handleProcessTermination();

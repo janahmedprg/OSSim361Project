@@ -20,16 +20,18 @@ int main(int argc, char *argv[])
     int totalMemory = system.memory;
     int totalDevices = system.devices;
 
-    queue<Process> readyQueue;
+    queue<Job> readyQueue;
+    queue<Job> waitQueue;
     priority_queue<struct Job, vector<struct Job>, cmpQ1> holdQueue1;
     priority_queue<struct Job, vector<struct Job>, cmpQ2> holdQueue2;
 
-    Process *CPU = nullptr;
+    Job *CPU = nullptr;
 
     // Main driver.
     int timeOfNextInput;
     int timeOfNextInternalEvent = system.quantum;
     long unsigned int instructionIdx = 0;
+    long currQuantum = system.quantum;
 
     bool running = true;
 
@@ -49,13 +51,13 @@ int main(int argc, char *argv[])
 
         // The time of next internal event will normally be the time quantum
         // unless the quantum will finish the burst time of the process, then it is the remaining time.
-        if (CPU != nullptr && CPU->burstTimeRemaining < system.quantum)
+        if (CPU != nullptr && CPU->burstTime < currQuantum)
         {
-            timeOfNextInternalEvent = CPU->burstTimeRemaining;
+            timeOfNextInternalEvent = CPU->burstTime;
         }
         else
         {
-            timeOfNextInternalEvent = system.quantum;
+            timeOfNextInternalEvent = currQuantum;
         }
 
         if (timeOfNextInput < timeOfNextInternalEvent)
@@ -63,8 +65,9 @@ int main(int argc, char *argv[])
             // We will handle the instruction first
             // Jump the current time to the next input.
             system.currTime += timeOfNextInput;
+            currQuantum -= timeOfNextInput;
             if(CPU != nullptr){
-                CPU->burstTimeRemaining -= timeOfNextInput;
+                CPU->burstTime -= timeOfNextInput;
             }
             switch (instructions[instructionIdx].type)
             {
@@ -81,10 +84,18 @@ int main(int argc, char *argv[])
                 }
                 break;
             case DRel:
-                handleDeviceRelease();
+            if (instructions[instructionIdx].data.deviceRelease.jobNumber == CPU->jobNumber && 
+                (instructions[instructionIdx].data.deviceRelease.deviceNumber)<=CPU->devicesHeld){
+                    handleDeviceRelease(instructions[instructionIdx].data.deviceRelease, waitQueue, readyQueue, CPU, &system);
+                    currQuantum = system.quantum;
+                }
                 break;
             case DReq:
-                handleDeviceRequest();
+                if (instructions[instructionIdx].data.deviceRequest.jobNumber == CPU->jobNumber && 
+                (instructions[instructionIdx].data.deviceRequest.deviceNumber+CPU->devicesHeld)<=CPU->devicesRequirement){
+                    bool safe = handleDeviceRequest(instructions[instructionIdx].data.deviceRequest, waitQueue, readyQueue, CPU, &system);
+                    currQuantum = system.quantum;
+                }
                 break;
             case Display:
                 handleDisplay();
@@ -100,12 +111,11 @@ int main(int argc, char *argv[])
             // We are handling the internal event first (this includes the case that they are at the same time).
             // Jump forward to the end of the quantum.
             system.currTime += timeOfNextInternalEvent;
-
             if (CPU != nullptr){
-                CPU->burstTimeRemaining -= timeOfNextInternalEvent;
+                CPU->burstTime -= timeOfNextInternalEvent;
             }
             // Remove the process from the queue.
-            if (CPU != nullptr && CPU->burstTimeRemaining == 0)
+            if (CPU != nullptr && CPU->burstTime == 0)
             {
                 readyQueue.pop();
                 if(readyQueue.size()>0){
@@ -126,6 +136,7 @@ int main(int argc, char *argv[])
                     readyQueue.pop();
                 }
             }
+            currQuantum = system.quantum;
         }
     }
 
