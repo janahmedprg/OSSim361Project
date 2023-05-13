@@ -43,7 +43,7 @@ bool bankersAlgo(int k, vector<int> alloc, vector<int> maxReq, vector<int> need,
     return safe;
 }
 
-bool handleDeviceRequest(DeviceRequest req, queue<Job>& waitQueue, queue<Job>& readyQueue,Job* CPU, System* system)
+void handleDeviceRequest(DeviceRequest req, queue<Job>& waitQueue, queue<Job>& readyQueue,Job* CPU, System* system)
 {
     // Run banker's algo -> it will return a boolean value
     // If true:
@@ -77,7 +77,7 @@ bool handleDeviceRequest(DeviceRequest req, queue<Job>& waitQueue, queue<Job>& r
         waitQueue.push(*CPU);
     }
     CPU = nullptr; 
-    return safe;
+    return;
 }
 
 void handleDeviceRelease(DeviceRelease req, queue<Job>& waitQueue, queue<Job>& readyQueue, Job* CPU, System* system)
@@ -95,7 +95,6 @@ void handleDeviceRelease(DeviceRelease req, queue<Job>& waitQueue, queue<Job>& r
 
     queue<Job> tmpWait = waitQueue;
     queue<Job> newWaitQueue;
-    int n = tmpWait.size();
 
     while(!tmpWait.empty()){
         int work = system->devices - tmpWait.front().devicesHeld;

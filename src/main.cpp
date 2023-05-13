@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
             case DReq:
                 if (instructions[instructionIdx].data.deviceRequest.jobNumber == CPU->jobNumber && 
                 (instructions[instructionIdx].data.deviceRequest.deviceNumber+CPU->devicesHeld)<=CPU->devicesRequirement){
-                    bool safe = handleDeviceRequest(instructions[instructionIdx].data.deviceRequest, waitQueue, readyQueue, CPU, &system);
+                    handleDeviceRequest(instructions[instructionIdx].data.deviceRequest, waitQueue, readyQueue, CPU, &system);
                     currQuantum = system.quantum;
                 }
                 break;
