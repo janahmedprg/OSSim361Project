@@ -16,6 +16,7 @@ struct Job
     int devicesRequirement;
     int devicesHeld;
     int burstTime;
+    int origBTime;
     int priority;
 };
 
@@ -44,10 +45,12 @@ void handleDeviceRequest(DeviceRequest req, queue<Job>& waitQueue, queue<Job>& r
 
 void handleDeviceRelease(DeviceRelease req, queue<Job>& waitQueue, queue<Job>& readyQueue, Job* CPU, System* system);
 
-void handleDisplay();
+void handleDisplay(queue<Job>& waitQueue,priority_queue<struct Job, vector<struct Job>, cmpQ1>& holdQueue1,
+                   priority_queue<struct Job, vector<struct Job>, cmpQ2>& holdQueue2,
+                   queue<Job>& readyQueue, Job* CPU, System* system, vector<pair<Job,int>>& doneArr);
 
 void handleProcessTermination(queue<Job>& waitQueue,priority_queue<struct Job, vector<struct Job>, cmpQ1>& holdQueue1,
                               priority_queue<struct Job, vector<struct Job>, cmpQ2>& holdQueue2,
-                              queue<Job>& readyQueue, Job* CPU, System* system, vector<Job>& doneArr);
+                              queue<Job>& readyQueue, Job* CPU, System* system, vector<pair<Job,int>>& doneArr);
 
 #endif

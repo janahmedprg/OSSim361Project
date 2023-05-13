@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
 
     queue<Job> readyQueue;
     queue<Job> waitQueue;
-    vector<Job> doneArr;
+    vector<pair<Job, int>> doneArr;
     priority_queue<struct Job, vector<struct Job>, cmpQ1> holdQueue1;
     priority_queue<struct Job, vector<struct Job>, cmpQ2> holdQueue2;
 
@@ -33,11 +33,10 @@ int main(int argc, char *argv[])
     int timeOfNextInternalEvent = system.quantum;
     long unsigned int instructionIdx = 0;
     long currQuantum = system.quantum;
+   
 
-    bool running = true;
 
-
-    while (running)
+    while (true)
     {
         // The time of next input should be infinite if there are none left,
         // otherwise it is the time of next instruction - current time.
@@ -78,7 +77,9 @@ int main(int argc, char *argv[])
                 tmp.arrival = instructions[instructionIdx].time;
                 tmp.memoryRequirement = instructions[instructionIdx].data.jobArrival.memoryRequirement;
                 tmp.devicesRequirement = instructions[instructionIdx].data.jobArrival.devicesRequirement;
+                tmp.devicesHeld = 0;
                 tmp.burstTime = instructions[instructionIdx].data.jobArrival.burstTime;
+                tmp.origBTime = tmp.burstTime;
                 tmp.priority = instructions[instructionIdx].data.jobArrival.priority;
                 if(totalDevices>=tmp.devicesRequirement && totalMemory>= tmp.memoryRequirement){
                     handleJobArrival(tmp, holdQueue1, holdQueue2, readyQueue, &system);
@@ -99,7 +100,7 @@ int main(int argc, char *argv[])
                 }
                 break;
             case Display:
-                handleDisplay();
+                handleDisplay(waitQueue, holdQueue1, holdQueue2, readyQueue, CPU, &system, doneArr);
                 break;
             default:
                 cout << "Erroneous type value of event!" << endl;
@@ -139,8 +140,10 @@ int main(int argc, char *argv[])
             }
             currQuantum = system.quantum;
         }
+        if(CPU == nullptr && holdQueue1.empty() && holdQueue2.empty() && readyQueue.empty()
+           && waitQueue.empty() && instructionIdx >= instructions.size()){
+            break;
+        }
     }
-
-    // print(system, instructions);
     return 0;
 }

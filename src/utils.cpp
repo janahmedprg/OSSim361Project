@@ -29,7 +29,7 @@ bool bankersAlgo(int k, vector<int> alloc, vector<int> maxReq, vector<int> need,
             if(finish[i] == false && need[i]<=work){
                 work += alloc[i];
                 finish[i] = true;
-                flag = false;
+                flag = true;
             }
         }
         if (flag){
@@ -133,16 +133,70 @@ void handleDeviceRelease(DeviceRelease req, queue<Job>& waitQueue, queue<Job>& r
     return;
 }
 
-void handleDisplay()
+void handleDisplay(queue<Job>& waitQueue,priority_queue<struct Job, vector<struct Job>, cmpQ1>& holdQueue1,
+                   priority_queue<struct Job, vector<struct Job>, cmpQ2>& holdQueue2,
+                   queue<Job>& readyQueue, Job* CPU, System* system, vector<pair<Job,int>>& doneArr)
 {
-    // TODO
-    cout << "handling display" << endl;
+    double systemTurn = 0;
+    cout<<"At time "<<system->currTime<<":\n";
+    cout<<"Current Available Main Memory="<<system->memory<<"\n";
+    cout<<"Current Devices="<<system->devices<<"\nCompleted Jobs:\n";
+    cout<<"--------------------------------------------------------\n";
+    cout<<"Job ID    Arrival Time    Finish Time    Turnaround Time\n";
+    cout<<"========================================================\n";
+    for(auto x:doneArr){
+        systemTurn += (double)(x.second - x.first.arrival);
+        cout<<"   "<<x.first.jobNumber<<"           "<<x.first.arrival<<"               "<<x.second<<"              "<<x.second - x.first.arrival<<"\n";
+    }
+    systemTurn = systemTurn/(double)doneArr.size();
+    cout<<"\n";
+    cout<<"Hold Queue 1:\n-------------------------\nJob ID    Run Time\n=========================\n";
+    priority_queue<struct Job, vector<struct Job>, cmpQ1> tmpHQ1 = holdQueue1;
+    while(!tmpHQ1.empty()){
+        cout<<"  "<<tmpHQ1.top().jobNumber<<"         "<<tmpHQ1.top().burstTime<<"\n";
+        tmpHQ1.pop();
+    }
+
+    cout<<"\n";
+    cout<<"Hold Queue 2:\n-------------------------\nJob ID    Run Time\n=========================\n";
+    priority_queue<struct Job, vector<struct Job>, cmpQ2> tmpHQ2 = holdQueue2;
+    while(!tmpHQ2.empty()){
+        cout<<"  "<<tmpHQ2.top().jobNumber<<"         "<<tmpHQ2.top().burstTime<<"\n";
+        tmpHQ2.pop();
+    }
+
+    cout<<"\n";
+    cout<<"Ready Queue:\n----------------------------------\nJob ID    Run Time    Time Accrued\n==================================\n";
+    queue<Job> tmpRQ = readyQueue;
+    while(!tmpRQ.empty()){
+        cout<<"  "<<tmpRQ.front().jobNumber<<"         "<<tmpRQ.front().burstTime<<"             "<<tmpRQ.front().origBTime - tmpRQ.front().burstTime<<"\n";
+        tmpRQ.pop();
+    }
+    
+    cout<<"\n";
+    cout<<"Process running on CPU:\n-----------------------------------\nJob ID    Time Accrued    Time Left\n===================================\n";
+    if(CPU != nullptr){
+        cout<<"   "<<CPU->jobNumber<<"           "<<CPU->origBTime-CPU->burstTime<<"             "<<CPU->burstTime<<"\n";
+    }
+    cout<<"\n";
+
+    cout<<"Wait Queue:\n----------------------------------\nJob ID    Run Time    Time Accrued\n==================================\n";
+    queue<Job> tmpWQ = waitQueue;
+    while(!tmpWQ.empty()){
+        cout<<"  "<<tmpWQ.front().jobNumber<<"         "<<tmpWQ.front().burstTime<<"             "<<tmpWQ.front().origBTime - tmpWQ.front().burstTime<<"\n";
+        tmpWQ.pop();
+    }
+    cout<<"\n";
+
+    if(system->currTime == 9999){
+        cout<<"System Turnaround Time: "<<systemTurn<<"\n";
+    }
     return;
 }
 
 void handleProcessTermination(queue<Job>& waitQueue,priority_queue<struct Job, vector<struct Job>, cmpQ1>& holdQueue1,
                               priority_queue<struct Job, vector<struct Job>, cmpQ2>& holdQueue2,
-                              queue<Job>& readyQueue, Job* CPU, System* system, vector<Job>& doneArr)
+                              queue<Job>& readyQueue, Job* CPU, System* system, vector<pair<Job,int>>& doneArr)
 {
     DeviceRelease dRelease = {CPU->jobNumber, CPU->devicesHeld};
     handleDeviceRelease(dRelease, waitQueue, readyQueue, CPU, system);
@@ -161,6 +215,6 @@ void handleProcessTermination(queue<Job>& waitQueue,priority_queue<struct Job, v
             holdQueue2.pop();
         }
     }
-    doneArr.push_back(*CPU);
+    doneArr.push_back({*CPU, system->currTime});
     return;
 }
