@@ -16,7 +16,11 @@ int main(int argc, char *argv[])
 {
     vector<Instruction> instructions;
     System system;
-    readInput("../input/i0.txt", instructions, &system);
+    /* Choose an input file: */
+    // readInput("../input/i0.txt", instructions, &system);
+    readInput("../input/i1.txt", instructions, &system);
+    // readInput("../input/i2.txt", instructions, &system);
+    //#####################################################
     int totalMemory = system.memory;
     int totalDevices = system.devices;
 
@@ -58,6 +62,11 @@ int main(int argc, char *argv[])
         else
         {
             timeOfNextInternalEvent = currQuantum;
+        }
+
+        if(CPU == nullptr && !readyQueue.empty()){
+            CPU = &readyQueue.front();
+            readyQueue.pop();
         }
 
         if (timeOfNextInput < timeOfNextInternalEvent)

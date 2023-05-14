@@ -41,16 +41,16 @@ struct cmpQ2{
 void handleJobArrival(struct Job job, priority_queue<struct Job, vector<struct Job>, cmpQ1>& holdQueue1, priority_queue<struct Job,
                       vector<struct Job>, cmpQ2>& holdQueue2, queue<Job>& readyQueue,System* system);
 
-void handleDeviceRequest(DeviceRequest req, queue<Job>& waitQueue, queue<Job>& readyQueue, Job* CPU, System* system);
+void handleDeviceRequest(DeviceRequest req, queue<Job>& waitQueue, queue<Job>& readyQueue, Job*& CPU, System* system);
 
-void handleDeviceRelease(DeviceRelease req, queue<Job>& waitQueue, queue<Job>& readyQueue, Job* CPU, System* system);
+void handleDeviceRelease(DeviceRelease req, queue<Job>& waitQueue, queue<Job>& readyQueue, Job*& CPU, System* system);
 
 void handleDisplay(queue<Job>& waitQueue,priority_queue<struct Job, vector<struct Job>, cmpQ1>& holdQueue1,
                    priority_queue<struct Job, vector<struct Job>, cmpQ2>& holdQueue2,
-                   queue<Job>& readyQueue, Job* CPU, System* system, vector<pair<Job,int>>& doneArr);
+                   queue<Job>& readyQueue, Job*& CPU, System* system, vector<pair<Job,int>>& doneArr);
 
 void handleProcessTermination(queue<Job>& waitQueue,priority_queue<struct Job, vector<struct Job>, cmpQ1>& holdQueue1,
                               priority_queue<struct Job, vector<struct Job>, cmpQ2>& holdQueue2,
-                              queue<Job>& readyQueue, Job* CPU, System* system, vector<pair<Job,int>>& doneArr);
+                              queue<Job>& readyQueue, Job*& CPU, System* system, vector<pair<Job,int>>& doneArr);
 
 #endif

@@ -1,6 +1,11 @@
 #include <utils.h>
+#include <algorithm>
 
 using namespace std;
+
+bool cmpJobArr(pair<Job,int> a, pair<Job,int> b){
+            return (a.first.arrival < b.first.arrival);
+}
 
 void handleJobArrival(struct Job job, priority_queue<struct Job, vector<struct Job>, cmpQ1>& holdQueue1, priority_queue<struct Job, 
                       vector<struct Job>, cmpQ2>& holdQueue2, queue<Job>& readyQueue,System* system)
@@ -24,12 +29,12 @@ bool bankersAlgo(int k, vector<int> alloc, vector<int> maxReq, vector<int> need,
     
     vector<bool> finish(k,false);
     while(true){
-        bool flag = false;
+        bool flag = true;
         for(int i = 0; i<k+1; ++i){
             if(finish[i] == false && need[i]<=work){
                 work += alloc[i];
                 finish[i] = true;
-                flag = true;
+                flag = false;
             }
         }
         if (flag){
@@ -38,12 +43,12 @@ bool bankersAlgo(int k, vector<int> alloc, vector<int> maxReq, vector<int> need,
     }
     bool safe = true;
     for (int i = 0; i<k; ++i){
-        safe = safe & finish[i]; 
+        safe = safe && finish[i]; 
     }
     return safe;
 }
 
-void handleDeviceRequest(DeviceRequest req, queue<Job>& waitQueue, queue<Job>& readyQueue,Job* CPU, System* system)
+void handleDeviceRequest(DeviceRequest req, queue<Job>& waitQueue, queue<Job>& readyQueue,Job*& CPU, System* system)
 {
     // Run banker's algo -> it will return a boolean value
     // If true:
@@ -80,7 +85,7 @@ void handleDeviceRequest(DeviceRequest req, queue<Job>& waitQueue, queue<Job>& r
     return;
 }
 
-void handleDeviceRelease(DeviceRelease req, queue<Job>& waitQueue, queue<Job>& readyQueue, Job* CPU, System* system)
+void handleDeviceRelease(DeviceRelease req, queue<Job>& waitQueue, queue<Job>& readyQueue, Job*& CPU, System* system)
 {
     // Update the number of devices the job currently holds
     // increase the number of devices the system has to give
@@ -135,9 +140,10 @@ void handleDeviceRelease(DeviceRelease req, queue<Job>& waitQueue, queue<Job>& r
 
 void handleDisplay(queue<Job>& waitQueue,priority_queue<struct Job, vector<struct Job>, cmpQ1>& holdQueue1,
                    priority_queue<struct Job, vector<struct Job>, cmpQ2>& holdQueue2,
-                   queue<Job>& readyQueue, Job* CPU, System* system, vector<pair<Job,int>>& doneArr)
+                   queue<Job>& readyQueue, Job*& CPU, System* system, vector<pair<Job,int>>& doneArr)
 {
     double systemTurn = 0;
+    sort(doneArr.begin(),doneArr.end(),cmpJobArr);
     cout<<"At time "<<system->currTime<<":\n";
     cout<<"Current Available Main Memory="<<system->memory<<"\n";
     cout<<"Current Devices="<<system->devices<<"\nCompleted Jobs:\n";
@@ -196,19 +202,21 @@ void handleDisplay(queue<Job>& waitQueue,priority_queue<struct Job, vector<struc
 
 void handleProcessTermination(queue<Job>& waitQueue,priority_queue<struct Job, vector<struct Job>, cmpQ1>& holdQueue1,
                               priority_queue<struct Job, vector<struct Job>, cmpQ2>& holdQueue2,
-                              queue<Job>& readyQueue, Job* CPU, System* system, vector<pair<Job,int>>& doneArr)
+                              queue<Job>& readyQueue, Job*& CPU, System* system, vector<pair<Job,int>>& doneArr)
 {
-    DeviceRelease dRelease = {CPU->jobNumber, CPU->devicesHeld};
+    DeviceRelease dRelease;
+    dRelease.jobNumber = CPU->jobNumber;
+    dRelease.deviceNumber = CPU->devicesHeld;
     handleDeviceRelease(dRelease, waitQueue, readyQueue, CPU, system);
     system->memory += CPU->memoryRequirement;
-    if(holdQueue1.size()>0){
+    if(!holdQueue1.empty()){
         if(system->memory >= holdQueue1.top().memoryRequirement){
             readyQueue.push(holdQueue1.top());
             system->memory -= holdQueue1.top().memoryRequirement;
             holdQueue1.pop();
         }
     }
-    else if (holdQueue2.size()>0){
+    else if (!holdQueue2.empty()){
         if (system->memory >= holdQueue2.top().memoryRequirement){
             readyQueue.push(holdQueue2.top());
             system->memory -= holdQueue2.top().memoryRequirement;
