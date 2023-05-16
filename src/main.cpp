@@ -11,7 +11,6 @@
 
 using namespace std;
 
-
 int main(int argc, char *argv[])
 {
     vector<Instruction> instructions;
@@ -20,7 +19,9 @@ int main(int argc, char *argv[])
     // readInput("../input/i0.txt", instructions, &system);
     readInput("../input/i1.txt", instructions, &system);
     // readInput("../input/i2.txt", instructions, &system);
-    //#####################################################
+    // print(system, instructions);
+    // return 0;
+    // #####################################################
     int totalMemory = system.memory;
     int totalDevices = system.devices;
 
@@ -37,8 +38,6 @@ int main(int argc, char *argv[])
     int timeOfNextInternalEvent = system.quantum;
     long unsigned int instructionIdx = 0;
     long currQuantum = system.quantum;
-   
-
 
     while (true)
     {
@@ -64,7 +63,8 @@ int main(int argc, char *argv[])
             timeOfNextInternalEvent = currQuantum;
         }
 
-        if(CPU == nullptr && !readyQueue.empty()){
+        if (CPU == nullptr && !readyQueue.empty())
+        {
             CPU = &readyQueue.front();
             readyQueue.pop();
         }
@@ -75,7 +75,8 @@ int main(int argc, char *argv[])
             // Jump the current time to the next input.
             system.currTime += timeOfNextInput;
             currQuantum -= timeOfNextInput;
-            if(CPU != nullptr){
+            if (CPU != nullptr)
+            {
                 CPU->burstTime -= timeOfNextInput;
             }
             switch (instructions[instructionIdx].type)
@@ -90,20 +91,23 @@ int main(int argc, char *argv[])
                 tmp.burstTime = instructions[instructionIdx].data.jobArrival.burstTime;
                 tmp.origBTime = tmp.burstTime;
                 tmp.priority = instructions[instructionIdx].data.jobArrival.priority;
-                if(totalDevices>=tmp.devicesRequirement && totalMemory>= tmp.memoryRequirement){
+                if (totalDevices >= tmp.devicesRequirement && totalMemory >= tmp.memoryRequirement)
+                {
                     handleJobArrival(tmp, holdQueue1, holdQueue2, readyQueue, &system);
                 }
                 break;
             case DRel:
-            if (instructions[instructionIdx].data.deviceRelease.jobNumber == CPU->jobNumber && 
-                (instructions[instructionIdx].data.deviceRelease.deviceNumber)<=CPU->devicesHeld){
+                if (instructions[instructionIdx].data.deviceRelease.jobNumber == CPU->jobNumber &&
+                    (instructions[instructionIdx].data.deviceRelease.deviceNumber) <= CPU->devicesHeld)
+                {
                     handleDeviceRelease(instructions[instructionIdx].data.deviceRelease, waitQueue, readyQueue, CPU, &system);
                     currQuantum = system.quantum;
                 }
                 break;
             case DReq:
-                if (instructions[instructionIdx].data.deviceRequest.jobNumber == CPU->jobNumber && 
-                (instructions[instructionIdx].data.deviceRequest.deviceNumber+CPU->devicesHeld)<=CPU->devicesRequirement){
+                if (instructions[instructionIdx].data.deviceRequest.jobNumber == CPU->jobNumber &&
+                    (instructions[instructionIdx].data.deviceRequest.deviceNumber + CPU->devicesHeld) <= CPU->devicesRequirement)
+                {
                     handleDeviceRequest(instructions[instructionIdx].data.deviceRequest, waitQueue, readyQueue, CPU, &system);
                     currQuantum = system.quantum;
                 }
@@ -122,35 +126,40 @@ int main(int argc, char *argv[])
             // We are handling the internal event first (this includes the case that they are at the same time).
             // Jump forward to the end of the quantum.
             system.currTime += timeOfNextInternalEvent;
-            if (CPU != nullptr){
+            if (CPU != nullptr)
+            {
                 CPU->burstTime -= timeOfNextInternalEvent;
             }
             // Remove the process from the queue.
             if (CPU != nullptr && CPU->burstTime == 0)
             {
                 handleProcessTermination(waitQueue, holdQueue1, holdQueue2, readyQueue, CPU, &system, doneArr);
-                if(readyQueue.size()>0){
+                if (readyQueue.size() > 0)
+                {
                     CPU = &readyQueue.front();
                     readyQueue.pop();
                 }
-                else{
+                else
+                {
                     CPU = nullptr;
                 }
             }
             else
             {
-                if(CPU != nullptr){
+                if (CPU != nullptr)
+                {
                     readyQueue.push(*CPU);
                 }
-                if(readyQueue.size() != 0){
+                if (readyQueue.size() != 0)
+                {
                     CPU = &readyQueue.front();
                     readyQueue.pop();
                 }
             }
             currQuantum = system.quantum;
         }
-        if(CPU == nullptr && holdQueue1.empty() && holdQueue2.empty() && readyQueue.empty()
-           && waitQueue.empty() && instructionIdx >= instructions.size()){
+        if (CPU == nullptr && holdQueue1.empty() && holdQueue2.empty() && readyQueue.empty() && waitQueue.empty() && instructionIdx >= instructions.size())
+        {
             break;
         }
     }
