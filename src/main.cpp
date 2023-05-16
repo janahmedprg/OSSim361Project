@@ -17,8 +17,8 @@ int main(int argc, char *argv[])
     System system;
     /* Choose an input file: */
     // readInput("../input/i0.txt", instructions, &system);
-    readInput("../input/i1.txt", instructions, &system);
-    // readInput("../input/i2.txt", instructions, &system);
+    // readInput("../input/i1.txt", instructions, &system);
+    readInput("../input/i2.txt", instructions, &system);
     // print(system, instructions);
     // return 0;
     // #####################################################
@@ -41,6 +41,14 @@ int main(int argc, char *argv[])
 
     while (true)
     {
+        // If there is nothing on the CPU and there are jobs on the ready queue, then place on the CPU.
+        if (CPU == nullptr && !readyQueue.empty())
+        {
+            CPU = &readyQueue.front();
+            readyQueue.pop();
+        }
+
+
         // The time of next input should be infinite if there are none left,
         // otherwise it is the time of next instruction - current time.
         if (instructionIdx < instructions.size())
@@ -61,12 +69,6 @@ int main(int argc, char *argv[])
         else
         {
             timeOfNextInternalEvent = currQuantum;
-        }
-
-        if (CPU == nullptr && !readyQueue.empty())
-        {
-            CPU = &readyQueue.front();
-            readyQueue.pop();
         }
 
         if (timeOfNextInput < timeOfNextInternalEvent)
@@ -101,6 +103,8 @@ int main(int argc, char *argv[])
                     (instructions[instructionIdx].data.deviceRelease.deviceNumber) <= CPU->devicesHeld)
                 {
                     handleDeviceRelease(instructions[instructionIdx].data.deviceRelease, waitQueue, readyQueue, CPU, &system);
+                    // Reset the time quantum
+                    // CPU should be nullpointer rn
                     currQuantum = system.quantum;
                 }
                 break;
@@ -109,6 +113,8 @@ int main(int argc, char *argv[])
                     (instructions[instructionIdx].data.deviceRequest.deviceNumber + CPU->devicesHeld) <= CPU->devicesRequirement)
                 {
                     handleDeviceRequest(instructions[instructionIdx].data.deviceRequest, waitQueue, readyQueue, CPU, &system);
+                    // Reset the time quantum
+                    // CPU should be nullpointer rn
                     currQuantum = system.quantum;
                 }
                 break;

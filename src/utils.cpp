@@ -108,16 +108,19 @@ void handleDeviceRelease(DeviceRelease req, queue<Job>& waitQueue, queue<Job>& r
         vector<int> alloc;
         vector<int> maxReq;
         vector<int> need;
+        // Populating the bankers algorithm helper vectors.
         for (int i = 0; i<k-1; ++i){
             alloc.push_back(tmpCopy.front().devicesHeld);
             maxReq.push_back(tmpCopy.front().devicesRequirement);
             need.push_back(maxReq[i] - alloc[i]);
             tmpCopy.pop(); 
         }
+        // Add the process also currently on the CPU
         alloc.push_back(CPU->devicesHeld);
         maxReq.push_back(CPU->devicesRequirement);
         need.push_back(CPU->devicesRequirement - CPU->devicesHeld);
 
+        // Assume we were to add the device in the wait queue
         alloc.push_back(tmpWait.front().devicesHeld);
         maxReq.push_back(tmpWait.front().devicesRequirement);
         need.push_back(tmpWait.front().devicesRequirement - tmpWait.front().devicesHeld);
