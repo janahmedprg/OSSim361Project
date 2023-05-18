@@ -8,12 +8,15 @@
 
 using namespace std;
 
+void debug(string message);
+
 struct Job
 {
     int jobNumber;
     int arrival;
     int memoryRequirement;
     int devicesRequirement;
+    int devicesRequesting;
     int devicesHeld;
     int burstTime;
     int origBTime;

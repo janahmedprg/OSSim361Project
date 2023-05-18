@@ -3,6 +3,12 @@
 
 using namespace std;
 
+const bool DEBUG = true;
+
+void debug(string message) {
+    if (DEBUG) cout << message << endl;
+}
+
 bool cmpJobArr(pair<Job,int> a, pair<Job,int> b){
             return (a.first.arrival < b.first.arrival);
 }
@@ -57,31 +63,89 @@ void handleDeviceRequest(DeviceRequest req, queue<Job>& waitQueue, queue<Job>& r
     // If false: move job to end of the waiting queue
     int work = system->devices - req.deviceNumber;
     int k = readyQueue.size()+1;
-    queue<Job> tmpCopy = readyQueue;
+    queue<Job> readyCopy = readyQueue;
     vector<int> alloc;
     vector<int> maxReq;
     vector<int> need;
+    // Copy the ready queue and populate the bankers algorithm helper functions.
     for (int i = 0; i<k-1; ++i){
-        alloc.push_back(tmpCopy.front().devicesHeld);
-        maxReq.push_back(tmpCopy.front().devicesRequirement);
+        alloc.push_back(readyCopy.front().devicesHeld);
+        maxReq.push_back(readyCopy.front().devicesRequirement);
         need.push_back(maxReq[i] - alloc[i]);
-        tmpCopy.pop(); 
+        readyCopy.pop(); 
     }
+    // Add the values from the job on the CPU, this is the same job that is requesting the resources.
     alloc.push_back(CPU->devicesHeld + req.deviceNumber);
     maxReq.push_back(CPU->devicesRequirement);
     need.push_back(CPU->devicesRequirement - (CPU->devicesHeld + req.deviceNumber));
 
     bool safe = bankersAlgo(k, alloc, maxReq, need, work);
 
-    CPU->devicesHeld += req.deviceNumber;
     if(safe){
+        CPU->devicesHeld += req.deviceNumber;
         system->devices -= req.deviceNumber;
         readyQueue.push(*CPU);
     }
     else{
+        CPU->devicesRequesting = req.deviceNumber;
+        debug("Pushing job number " + to_string(CPU->jobNumber) + " to the wait queue");
         waitQueue.push(*CPU);
     }
-    CPU = nullptr; 
+    CPU = nullptr;
+    return;
+}
+
+void proccessWaitQueue(DeviceRelease req, queue<Job>& waitQueue, queue<Job>& readyQueue, Job*& CPU, System* system) {
+    queue<Job> tmpWait = waitQueue;
+    queue<Job> newWaitQueue;
+
+    while(!tmpWait.empty()){
+        // Assume we were to grant this devices request, then we would have less work to give out.
+        int work = system->devices - tmpWait.front().devicesRequesting;
+        int k = readyQueue.size()+1;
+        queue<Job> readyCopy = readyQueue;
+        vector<int> alloc;
+        vector<int> maxReq;
+        vector<int> need;
+        // Populating the bankers algorithm helper vectors.
+        for (int i = 0; i<k-1; ++i){
+            alloc.push_back(readyCopy.front().devicesHeld);
+            maxReq.push_back(readyCopy.front().devicesRequirement);
+            need.push_back(maxReq[i] - alloc[i]);
+            readyCopy.pop(); 
+        }
+        // Add the process also currently on the CPU
+        // CPU will be nullptr if this function is being called from Device Release, but should be populated if its from terminate process
+        if (CPU != nullptr) {
+            alloc.push_back(CPU->devicesHeld);
+            maxReq.push_back(CPU->devicesRequirement);
+            need.push_back(CPU->devicesRequirement - CPU->devicesHeld);
+        }
+
+        // Assume we were to grant the waiting job its resources, we need to increase its allocation and decrease its need..
+        alloc.push_back(tmpWait.front().devicesHeld + tmpWait.front().devicesRequesting);
+        maxReq.push_back(tmpWait.front().devicesRequirement);
+        need.push_back(tmpWait.front().devicesRequirement - (tmpWait.front().devicesHeld + tmpWait.front().devicesRequesting));
+
+        bool safe = bankersAlgo(k+1, alloc, maxReq, need, work);
+
+        if(safe){
+            // Actually grant the devices
+            debug("Adding jobNumber " + to_string(tmpWait.front().jobNumber) + " to readyQueue from the waitQueue");
+            system->devices -= tmpWait.front().devicesRequesting;
+            tmpWait.front().devicesHeld += tmpWait.front().devicesRequesting;
+            tmpWait.front().devicesRequesting = 0;
+            // Add to ready queue.
+            readyQueue.push(tmpWait.front());
+        }
+        else{
+            // Build new wait queue.
+            newWaitQueue.push(tmpWait.front());
+        }
+        // Remove the front of the wait queue that we are iterating over.
+        tmpWait.pop();
+    }
+    waitQueue = newWaitQueue;
     return;
 }
 
@@ -97,49 +161,45 @@ void handleDeviceRelease(DeviceRelease req, queue<Job>& waitQueue, queue<Job>& r
     // Reduce the number of devices system has to give. 
     system->devices += req.deviceNumber;
     CPU->devicesHeld -= req.deviceNumber;
+    debug("Handling a device release from job number " + to_string(req.jobNumber) + " of " + to_string(req.deviceNumber) + " devices. System now has " + to_string(system->devices));
 
-    queue<Job> tmpWait = waitQueue;
-    queue<Job> newWaitQueue;
+    // We need to immediately add the CPU to the back of the ready queue.
+    readyQueue.push(*CPU);
+    CPU = nullptr;
 
-    while(!tmpWait.empty()){
-        int work = system->devices - tmpWait.front().devicesHeld;
-        int k = readyQueue.size()+1;
-        queue<Job> tmpCopy = readyQueue;
-        vector<int> alloc;
-        vector<int> maxReq;
-        vector<int> need;
-        // Populating the bankers algorithm helper vectors.
-        for (int i = 0; i<k-1; ++i){
-            alloc.push_back(tmpCopy.front().devicesHeld);
-            maxReq.push_back(tmpCopy.front().devicesRequirement);
-            need.push_back(maxReq[i] - alloc[i]);
-            tmpCopy.pop(); 
+    proccessWaitQueue(req, waitQueue, readyQueue, CPU, system);
+}
+
+void handleProcessTermination(queue<Job>& waitQueue,priority_queue<struct Job, vector<struct Job>, cmpQ1>& holdQueue1,
+                              priority_queue<struct Job, vector<struct Job>, cmpQ2>& holdQueue2,
+                              queue<Job>& readyQueue, Job*& CPU, System* system, vector<pair<Job,int>>& doneArr)
+{
+    DeviceRelease dRelease;
+    dRelease.jobNumber = CPU->jobNumber;
+    dRelease.deviceNumber = CPU->devicesHeld;
+    system->devices += dRelease.deviceNumber;
+    CPU->devicesHeld -= dRelease.deviceNumber;
+    proccessWaitQueue(dRelease, waitQueue, readyQueue, CPU, system);
+    system->memory += CPU->memoryRequirement;
+    if(!holdQueue1.empty()){
+        if(system->memory >= holdQueue1.top().memoryRequirement){
+            readyQueue.push(holdQueue1.top());
+            system->memory -= holdQueue1.top().memoryRequirement;
+            holdQueue1.pop();
         }
-        // Add the process also currently on the CPU
-        alloc.push_back(CPU->devicesHeld);
-        maxReq.push_back(CPU->devicesRequirement);
-        need.push_back(CPU->devicesRequirement - CPU->devicesHeld);
-
-        // Assume we were to add the device in the wait queue
-        alloc.push_back(tmpWait.front().devicesHeld);
-        maxReq.push_back(tmpWait.front().devicesRequirement);
-        need.push_back(tmpWait.front().devicesRequirement - tmpWait.front().devicesHeld);
-
-        bool safe = bankersAlgo(k+1, alloc, maxReq, need, work);
-
-        if(safe){
-            readyQueue.push(tmpWait.front());
-            system->devices -= tmpWait.front().devicesHeld;
-        }
-        else{
-            newWaitQueue.push(tmpWait.front());
-        }
-
-        tmpWait.pop();
     }
-    waitQueue = newWaitQueue;
+    else if (!holdQueue2.empty()){
+        if (system->memory >= holdQueue2.top().memoryRequirement){
+            readyQueue.push(holdQueue2.top());
+            system->memory -= holdQueue2.top().memoryRequirement;
+            holdQueue2.pop();
+        }
+    }
+    doneArr.push_back({*CPU, system->currTime});
+    CPU = nullptr;
     return;
 }
+
 
 void handleDisplay(queue<Job>& waitQueue,priority_queue<struct Job, vector<struct Job>, cmpQ1>& holdQueue1,
                    priority_queue<struct Job, vector<struct Job>, cmpQ2>& holdQueue2,
@@ -200,32 +260,5 @@ void handleDisplay(queue<Job>& waitQueue,priority_queue<struct Job, vector<struc
     if(system->currTime == 9999){
         cout<<"System Turnaround Time: "<<systemTurn<<"\n";
     }
-    return;
-}
-
-void handleProcessTermination(queue<Job>& waitQueue,priority_queue<struct Job, vector<struct Job>, cmpQ1>& holdQueue1,
-                              priority_queue<struct Job, vector<struct Job>, cmpQ2>& holdQueue2,
-                              queue<Job>& readyQueue, Job*& CPU, System* system, vector<pair<Job,int>>& doneArr)
-{
-    DeviceRelease dRelease;
-    dRelease.jobNumber = CPU->jobNumber;
-    dRelease.deviceNumber = CPU->devicesHeld;
-    handleDeviceRelease(dRelease, waitQueue, readyQueue, CPU, system);
-    system->memory += CPU->memoryRequirement;
-    if(!holdQueue1.empty()){
-        if(system->memory >= holdQueue1.top().memoryRequirement){
-            readyQueue.push(holdQueue1.top());
-            system->memory -= holdQueue1.top().memoryRequirement;
-            holdQueue1.pop();
-        }
-    }
-    else if (!holdQueue2.empty()){
-        if (system->memory >= holdQueue2.top().memoryRequirement){
-            readyQueue.push(holdQueue2.top());
-            system->memory -= holdQueue2.top().memoryRequirement;
-            holdQueue2.pop();
-        }
-    }
-    doneArr.push_back({*CPU, system->currTime});
     return;
 }
