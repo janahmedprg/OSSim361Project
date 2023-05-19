@@ -18,8 +18,8 @@ int main(int argc, char *argv[])
     /* Choose an input file: */
     // readInput("../input/test1.txt", instructions, &system);
     // readInput("../input/i0.txt", instructions, &system);
-    // readInput("../input/i1.txt", instructions, &system);
-    readInput("../input/i2.txt", instructions, &system);
+    readInput("../input/i1.txt", instructions, &system);
+    // readInput("../input/i2.txt", instructions, &system);
     // print(system, instructions);
     // return 0;
     // #####################################################
@@ -51,12 +51,16 @@ int main(int argc, char *argv[])
             readyQueue.pop();
         }
 
-
+        bool instructionIsInternal = false;
         // The time of next input should be infinite if there are none left,
         // otherwise it is the time of next instruction - current time.
         if (instructionIdx < instructions.size())
         {
             timeOfNextInput = instructions[instructionIdx].time - system.currTime;
+            if (instructions[instructionIdx].type == DRel || instructions[instructionIdx].type == DReq) 
+            {
+                instructionIsInternal = true;
+            }
         }
         else
         {
@@ -84,8 +88,11 @@ int main(int argc, char *argv[])
 
         debug("Time till nextInput = " + std::to_string(timeOfNextInput));
         debug("Time till nextInternal = " + std::to_string(timeOfNextInternalEvent));
-
-        if (timeOfNextInput < timeOfNextInternalEvent)
+        if (((timeOfNextInput == timeOfNextInternalEvent) && instructionIsInternal)) {
+            debug("time of next input == time of next internal event and instruction is internal");
+        }
+        // if ((timeOfNextInput < timeOfNextInternalEvent) || ((timeOfNextInput == timeOfNextInternalEvent) && instructionIsInternal))
+        if ((timeOfNextInput < timeOfNextInternalEvent))
         {
             // We will handle the instruction first
             // Jump the current time to the next input.
