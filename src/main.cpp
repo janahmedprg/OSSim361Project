@@ -18,8 +18,8 @@ int main(int argc, char *argv[])
     /* Choose an input file: */
     // readInput("../input/test1.txt", instructions, &system);
     // readInput("../input/i0.txt", instructions, &system);
-    readInput("../input/i1.txt", instructions, &system);
-    // readInput("../input/i2.txt", instructions, &system);
+    // readInput("../input/i1.txt", instructions, &system);
+    readInput("../input/i2.txt", instructions, &system);
     // print(system, instructions);
     // return 0;
     // #####################################################
@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
         if (instructionIdx < instructions.size())
         {
             timeOfNextInput = instructions[instructionIdx].time - system.currTime;
-            if (instructions[instructionIdx].type == DRel || instructions[instructionIdx].type == DReq) 
+            if (instructions[instructionIdx].type == DRel || instructions[instructionIdx].type == DReq)
             {
                 instructionIsInternal = true;
             }
@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
         else
         {
             debug("There are no next inputs, nextInput is INT16_MAX");
-            timeOfNextInput = INT16_MAX-1;
+            timeOfNextInput = INT16_MAX - 1;
         }
 
         // The time of next internal event will normally be the time quantum
@@ -75,8 +75,9 @@ int main(int argc, char *argv[])
 
             timeOfNextInternalEvent = CPU->burstTime;
             debug("Internal event is set to the CPU's burst time");
-        } else if (CPU == nullptr) // If the CPU has nothing on it at this point, then the READY QUEUE must be empty, there is nothing to work on
-        { // and there should be no internal events.
+        }
+        else if (CPU == nullptr) // If the CPU has nothing on it at this point, then the READY QUEUE must be empty, there is nothing to work on
+        {                        // and there should be no internal events.
             timeOfNextInternalEvent = INT16_MAX;
             debug("Nothing on the CPU, internal event set to INT_MAX");
         }
@@ -88,7 +89,8 @@ int main(int argc, char *argv[])
 
         debug("Time till nextInput = " + std::to_string(timeOfNextInput));
         debug("Time till nextInternal = " + std::to_string(timeOfNextInternalEvent));
-        if (((timeOfNextInput == timeOfNextInternalEvent) && instructionIsInternal)) {
+        if (((timeOfNextInput == timeOfNextInternalEvent) && instructionIsInternal))
+        {
             debug("time of next input == time of next internal event and instruction is internal");
         }
         // if ((timeOfNextInput < timeOfNextInternalEvent) || ((timeOfNextInput == timeOfNextInternalEvent) && instructionIsInternal))
@@ -163,17 +165,17 @@ int main(int argc, char *argv[])
             {
                 CPU->burstTime -= timeOfNextInternalEvent;
             }
-            // The job on the CPU has been completed. Terminate and add something new to 
+            // The job on the CPU has been completed. Terminate and add something new to
             if (CPU != nullptr && CPU->burstTime == 0)
             {
                 debug("Job on CPU is terminating, jobNumber = " + to_string(CPU->jobNumber));
                 handleProcessTermination(waitQueue, holdQueue1, holdQueue2, readyQueue, CPU, &system, doneArr);
                 // At this point, the wait queue and both hold queues have been proccessed.
-                // And the job on the CPU should have been moved to the doneArr and 
+                // And the job on the CPU should have been moved to the doneArr and
                 // CPU should be nullptr.
             }
             else
-            { // Job on the CPU has been worked on, but is being switched off due to receiving is quantum. 
+            { // Job on the CPU has been worked on, but is being switched off due to receiving is quantum.
                 debug("Job on CPU has been worked on, moving now to the back of the readyQueue, jobNumber = " + to_string(CPU->jobNumber));
                 if (CPU != nullptr)
                 {
